@@ -20,6 +20,20 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border: 1px solid white;
+            border-radius: 5px;
+        }
+        .navbar .title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .navbar-section {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+            border: 1px solid white;
+            padding: 5px 10px;
+            border-radius: 5px;
         }
         .navbar button {
             padding: 10px;
@@ -33,6 +47,52 @@
         }
         .navbar button:hover {
             background-color: #003d73;
+        }
+        .switch-container {
+            display: flex;
+            align-items: center;
+        }
+        .switch-container label {
+            margin-right: 10px;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 34px;
+            height: 20px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 12px;
+            width: 12px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+        input:checked + .slider:before {
+            transform: translateX(14px);
         }
         .container {
             display: flex;
@@ -88,67 +148,33 @@
             font-size: 16px;
             background-color: #ffffff;
         }
-        .switch-container {
-            display: flex;
-            align-items: center;
-            border: 1px solid white;
-            padding: 5px 20px;
-            border-radius: 5px;
-        }
-        .switch-container label {
-            margin-right: 10px;
-        }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 34px;
-            height: 20px;
-        }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: 0.4s;
-            border-radius: 20px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 12px;
-            width: 12px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: 0.4s;
-            border-radius: 50%;
-        }
-        input:checked + .slider {
-            background-color: #4CAF50;
-        }
-        input:checked + .slider:before {
-            transform: translateX(14px);
-        }
     </style>
 </head>
 <body>
     <div class="navbar">
-        <div>HTML Editor</div>
-        <div class="switch-container">
-            <label for="autoUpdateSwitch">Auto-Update</label>
-            <label class="switch">
-                <input type="checkbox" id="autoUpdateSwitch" checked>
-                <span class="slider"></span>
-            </label>
-            <button onclick="updateOutput()">Update</button> <!-- Added Update button -->
+        <div class="title">HTML Editor</div>
+        <div class="navbar-section">
+            <div class="switch-container">
+                <label for="autoSaveSwitch">Auto-Save</label>
+                <label class="switch">
+                    <input type="checkbox" id="autoSaveSwitch" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <button onclick="saveHTML()">Save</button>
+        </div>
+        <div class="navbar-section">
+            <div class="switch-container">
+                <label for="autoUpdateSwitch">Auto-Update</label>
+                <label class="switch">
+                    <input type="checkbox" id="autoUpdateSwitch" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <button onclick="updateOutput()">Update</button>
+        </div>
+        <div class="navbar-section">
+            <button onclick="clearAll()">Clear All</button>
             <button onclick="downloadHTML()">Download</button>
         </div>
     </div>
@@ -162,6 +188,7 @@
 
     <script>
         let autoUpdate = true;
+        let autoSave = true;
 
         const editor = document.getElementById('editor');
         const lineNumbers = document.getElementById('line-numbers');
@@ -171,6 +198,9 @@
             if (autoUpdate) {
                 updateOutput();
             }
+            if (autoSave) {
+                saveHTML();
+            }
         });
 
         editor.addEventListener('scroll', function() {
@@ -179,6 +209,10 @@
 
         document.getElementById('autoUpdateSwitch').addEventListener('change', function() {
             autoUpdate = this.checked;
+        });
+
+        document.getElementById('autoSaveSwitch').addEventListener('change', function() {
+            autoSave = this.checked;
         });
 
         function updateLineNumbers() {
@@ -192,15 +226,39 @@
             outputDiv.innerHTML = editorContent;
         }
 
+        function saveHTML() {
+            const editorContent = editor.value;
+            localStorage.setItem('savedHTML', editorContent);
+        }
+
+        function loadHTML() {
+            const savedHTML = localStorage.getItem('savedHTML');
+            if (savedHTML) {
+                editor.value = savedHTML;
+                updateOutput();
+                updateLineNumbers();
+            }
+        }
+
+        function clearAll() {
+            editor.value = '';
+            updateOutput();
+            updateLineNumbers();
+            localStorage.removeItem('savedHTML');
+        }
+
         function downloadHTML() {
             const editorContent = editor.value;
-            const blob = new Blob([editorContent], { type: 'text/html' });
+            const encodedContent = encodeURIComponent(editorContent);
+            const dataUri = `data:text/html;charset=utf-8,${encodedContent}`;
+            
             const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
+            link.href = dataUri;
             link.download = 'yourfile.html';
             link.click();
         }
 
+        loadHTML();
         updateLineNumbers();
     </script>
 </body>
